@@ -1,34 +1,59 @@
 import { useMemo, useState } from 'react';
 import {
   ArrowLeft,
-  BadgeCheck,
+  BarChart3,
   ChevronRight,
   Clock3,
-  MapPin,
+  Flame,
   Medal,
-  Plus,
   Shield,
   Trophy,
   Users,
+  Zap,
 } from 'lucide-react';
 import { hasSupabaseConfig } from './supabaseClient';
 
 const nations = [
-  { code: 'MAR', region: 'MA', flag: '🇲🇦', name: 'Maroc', supporters: '42.8k', points: 184200, color: '#c9152f' },
-  { code: 'FRA', region: 'FR', flag: '🇫🇷', name: 'France', supporters: '39.1k', points: 173870, color: '#2756d8' },
-  { code: 'BRA', region: 'BR', flag: '🇧🇷', name: 'Brésil', supporters: '38.4k', points: 169540, color: '#19a463' },
-  { code: 'ARG', region: 'AR', flag: '🇦🇷', name: 'Argentine', supporters: '34.7k', points: 154220, color: '#4ab5e8' },
-  { code: 'USA', region: 'US', flag: '🇺🇸', name: 'États-Unis', supporters: '28.2k', points: 137600, color: '#19326f' },
-  { code: 'SEN', region: 'SN', flag: '🇸🇳', name: 'Sénégal', supporters: '24.9k', points: 128910, color: '#0b9b59' },
-  { code: 'CAN', region: 'CA', flag: '🇨🇦', name: 'Canada', supporters: '21.6k', points: 120340, color: '#d61f2f' },
-  { code: 'MEX', region: 'MX', flag: '🇲🇽', name: 'Mexique', supporters: '20.4k', points: 116800, color: '#11845b' },
+  { code: 'MAR', region: 'MA', flag: '🇲🇦', name: 'Maroc', supporters: 42800, points: 184200, color: '#c1272d', accent: '#006233', flagGradient: 'linear-gradient(90deg, #c1272d, #006233)' },
+  { code: 'FRA', region: 'FR', flag: '🇫🇷', name: 'France', supporters: 39100, points: 173870, color: '#002654', accent: '#ed2939', flagGradient: 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)' },
+  { code: 'BRA', region: 'BR', flag: '🇧🇷', name: 'Brésil', supporters: 38400, points: 169540, color: '#009739', accent: '#ffdf00', flagGradient: 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)' },
+  { code: 'ARG', region: 'AR', flag: '🇦🇷', name: 'Argentine', supporters: 34700, points: 154220, color: '#75aadb', accent: '#fcbf49', flagGradient: 'linear-gradient(180deg, #75aadb 0 33%, #ffffff 33% 66%, #75aadb 66% 100%)' },
+  { code: 'USA', region: 'US', flag: '🇺🇸', name: 'États-Unis', supporters: 28200, points: 137600, color: '#3c3b6e', accent: '#b22234', flagGradient: 'linear-gradient(135deg, #3c3b6e 0 42%, #ffffff 42% 50%, #b22234 50% 100%)' },
+  { code: 'SEN', region: 'SN', flag: '🇸🇳', name: 'Sénégal', supporters: 24900, points: 128910, color: '#00853f', accent: '#fdef42', flagGradient: 'linear-gradient(90deg, #00853f 0 33%, #fdef42 33% 66%, #e31b23 66% 100%)' },
+  { code: 'CAN', region: 'CA', flag: '🇨🇦', name: 'Canada', supporters: 21600, points: 120340, color: '#d52b1e', accent: '#ffffff', flagGradient: 'linear-gradient(90deg, #d52b1e 0 28%, #ffffff 28% 72%, #d52b1e 72% 100%)' },
+  { code: 'MEX', region: 'MX', flag: '🇲🇽', name: 'Mexique', supporters: 20400, points: 116800, color: '#006847', accent: '#ce1126', flagGradient: 'linear-gradient(90deg, #006847 0 33%, #ffffff 33% 66%, #ce1126 66% 100%)' },
+  { code: 'POR', region: 'PT', flag: '🇵🇹', name: 'Portugal', supporters: 23300, points: 125700, color: '#006600', accent: '#ff0000', flagGradient: 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)' },
 ];
 
-const fallbackMatches = [
-  { id: 1, title: 'Défi tirs au but', result: '+12 480 pts', time: 'Aujourd’hui' },
-  { id: 2, title: 'Quiz supporters', result: '+8 220 pts', time: 'Hier' },
-  { id: 3, title: 'Prédiction de score', result: '+5 940 pts', time: '2 jours' },
-  { id: 4, title: 'Défi collectif', result: '+18 100 pts', time: '3 jours' },
+const liveMatch = {
+  id: 'fra-por-live',
+  minute: 67,
+  homeCode: 'FRA',
+  awayCode: 'POR',
+  homeScore: 2,
+  awayScore: 1,
+  homeMatchPoints: 48240,
+  awayMatchPoints: 44790,
+};
+
+const timeline = [
+  { id: 1, minute: "67'", text: 'Grosse pression côté France, les supporters accélèrent.', side: 'FRA' },
+  { id: 2, minute: "61'", text: 'Portugal réduit l’écart dans le défi collectif.', side: 'POR' },
+  { id: 3, minute: "52'", text: 'Nouveau bonus de série débloqué par la France.', side: 'FRA' },
+  { id: 4, minute: "45'", text: 'Pause: match très serré entre les deux communautés.', side: null },
+];
+
+const matchLeaders = [
+  { name: 'Nora', country: 'FRA', supporting: 'FRA', points: 1220 },
+  { name: 'Leo', country: 'POR', supporting: 'POR', points: 1095 },
+  { name: 'Samir', country: 'MAR', supporting: 'FRA', points: 980 },
+  { name: 'Ana', country: 'BRA', supporting: 'POR', points: 870 },
+];
+
+const recentCountryGames = [
+  { id: 1, title: 'France vs Portugal', result: '+12 480 pts', time: 'Live' },
+  { id: 2, title: 'France vs Maroc', result: '+8 220 pts', time: 'Hier' },
+  { id: 3, title: 'France vs Brésil', result: '+5 940 pts', time: '2 jours' },
 ];
 
 function getSuggestedNationCode() {
@@ -36,88 +61,277 @@ function getSuggestedNationCode() {
   const region = locale.split('-')[1]?.toUpperCase();
   const match = nations.find((nation) => nation.region === region);
 
-  return match?.code || 'MAR';
+  return match?.code || 'FRA';
+}
+
+function getNation(code) {
+  return nations.find((nation) => nation.code === code) ?? nations[0];
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('fr-FR').format(value);
 }
 
 export function App() {
   const [selectedCode, setSelectedCode] = useState(getSuggestedNationCode);
-  const [hasJoined, setHasJoined] = useState(false);
+  const [screen, setScreen] = useState('home');
+  const [supportingCode, setSupportingCode] = useState(null);
   const [bonusPoints, setBonusPoints] = useState(0);
-  const selectedNation = nations.find((nation) => nation.code === selectedCode) ?? nations[0];
+
+  const selectedNation = getNation(selectedCode);
+  const homeNation = getNation(liveMatch.homeCode);
+  const awayNation = getNation(liveMatch.awayCode);
+  const supportingNation = supportingCode ? getNation(supportingCode) : selectedNation;
+  const selectedInLiveMatch = [liveMatch.homeCode, liveMatch.awayCode].includes(selectedCode);
+
+  const matchTheme = {
+    '--home-color': homeNation.color,
+    '--home-accent': homeNation.accent,
+    '--home-flag-gradient': homeNation.flagGradient,
+    '--away-color': awayNation.color,
+    '--away-accent': awayNation.accent,
+    '--away-flag-gradient': awayNation.flagGradient,
+    '--support-color': supportingNation.color,
+    '--support-accent': supportingNation.accent,
+    '--support-flag-gradient': supportingNation.flagGradient,
+  };
 
   const rankedNations = useMemo(
     () =>
       nations
         .map((nation) => ({
           ...nation,
-          points: nation.code === selectedCode ? nation.points + bonusPoints : nation.points,
+          points: nation.code === supportingCode ? nation.points + bonusPoints : nation.points,
         }))
         .sort((a, b) => b.points - a.points),
-    [bonusPoints, selectedCode],
+    [bonusPoints, supportingCode],
   );
 
   const selectedRank = rankedNations.findIndex((nation) => nation.code === selectedCode) + 1;
 
-  if (!hasJoined) {
+  function joinMatch(sideCode) {
+    setSupportingCode(sideCode);
+    setScreen('match');
+  }
+
+  function focusLiveMatch() {
+    document.querySelector('.live-match-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function goHomeToLiveMatch() {
+    setScreen('home');
+    window.setTimeout(focusLiveMatch, 0);
+  }
+
+  if (screen === 'country') {
     return (
-      <main className="app-shell">
-        <section className="welcome-screen">
-          <nav className="topbar" aria-label="Navigation principale">
-            <div className="brand">
-              <Shield aria-hidden="true" />
-              <span>FanBattle</span>
+      <main className="app-shell dashboard-shell">
+        <nav className="dashboard-topbar" aria-label="Navigation pays">
+          <button className="back-button" onClick={() => setScreen('home')} type="button">
+            <ArrowLeft aria-hidden="true" />
+            Accueil
+          </button>
+          <div className="brand dark">
+            <Shield aria-hidden="true" />
+            <span>FanBattle</span>
+          </div>
+        </nav>
+
+        <section
+          className="country-page-hero"
+          style={{
+            '--support-color': selectedNation.color,
+            '--support-accent': selectedNation.accent,
+            '--support-flag-gradient': selectedNation.flagGradient,
+          }}
+        >
+          <div>
+            <p className="eyebrow">Page pays</p>
+            <h1>
+              {selectedNation.flag} {selectedNation.name}
+            </h1>
+            <p className="dashboard-intro">
+              Résumé de la communauté, historique récent et position dans le classement mondial.
+            </p>
+          </div>
+          {selectedInLiveMatch ? (
+            <button className="tap-game compact-action" onClick={() => joinMatch(selectedCode)} type="button">
+              <Flame aria-hidden="true" />
+              Rejoindre le match live
+            </button>
+          ) : (
+            <button className="secondary-dark-button" onClick={goHomeToLiveMatch} type="button">
+              Voir les matchs live
+              <ChevronRight aria-hidden="true" />
+            </button>
+          )}
+        </section>
+
+        <section className="dashboard-grid" aria-label="Résumé du pays">
+          <div className="panel">
+            <div className="section-title">
+              <p>Statistiques</p>
+              <h2>
+                {selectedNation.flag} {selectedNation.name}
+              </h2>
             </div>
-            <span className="status-pill">
-              {hasSupabaseConfig ? 'Supabase connecté' : 'Démo locale'}
-            </span>
-          </nav>
-
-          <div className="welcome-layout">
-            <div className="welcome-copy">
-              <p className="eyebrow">FanBattle 2026</p>
-              <h1>Choisis ton pays</h1>
-              <p className="intro">
-                On te propose un pays selon la région détectée par ton navigateur. Tu peux le
-                changer avant d’entrer dans le classement.
-              </p>
-
-              <div className="suggested-card">
-                <MapPin aria-hidden="true" />
-                <span>Pays suggéré</span>
-                <strong>
-                  {selectedNation.flag} {selectedNation.name}
-                </strong>
+            <div className="country-stats">
+              <div>
+                <Medal aria-hidden="true" />
+                <span>Rang global</span>
+                <strong>#{selectedRank}</strong>
+              </div>
+              <div>
+                <Users aria-hidden="true" />
+                <span>Fans</span>
+                <strong>{formatNumber(selectedNation.supporters)}</strong>
+              </div>
+              <div>
+                <Trophy aria-hidden="true" />
+                <span>Points</span>
+                <strong>{formatNumber(selectedNation.points)}</strong>
               </div>
             </div>
+            <div className="history-list">
+              {recentCountryGames.map((game) => (
+                <div className="history-row" key={game.id}>
+                  <Clock3 aria-hidden="true" />
+                  <span>
+                    <strong>
+                      {selectedNation.flag} {game.title}
+                    </strong>
+                    <small>{game.time}</small>
+                  </span>
+                  <em>{game.result}</em>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <div className="country-panel">
-              <div className="section-title">
-                <p>Nation</p>
-                <h2>Représente tes couleurs</h2>
-              </div>
-              <div className="nation-grid">
-                {nations.map((nation) => (
-                  <button
-                    className={nation.code === selectedCode ? 'nation-tile active' : 'nation-tile'}
-                    key={nation.code}
-                    onClick={() => setSelectedCode(nation.code)}
-                    style={{ '--nation-color': nation.color }}
-                    type="button"
-                  >
-                    <span className="flag">{nation.flag}</span>
+          <div className="leaderboard panel">
+            <div className="section-title">
+              <p>Global</p>
+              <h2>Classement pays</h2>
+            </div>
+            <ol>
+              {rankedNations.slice(0, 7).map((nation, index) => (
+                <li className={nation.code === selectedCode ? 'highlighted-row' : ''} key={nation.code}>
+                  <span className="rank">{index + 1}</span>
+                  <span className="flag">{nation.flag}</span>
+                  <span className="leader-name">{nation.name}</span>
+                  <strong>{formatNumber(nation.points)}</strong>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (screen === 'match') {
+    return (
+      <main className="app-shell dashboard-shell">
+        <nav className="dashboard-topbar" aria-label="Navigation du match">
+          <button className="back-button" onClick={() => setScreen('home')} type="button">
+            <ArrowLeft aria-hidden="true" />
+            Accueil
+          </button>
+          <div className="brand dark">
+            <Shield aria-hidden="true" />
+            <span>FanBattle</span>
+          </div>
+        </nav>
+
+        <section className="match-layout" aria-label="Match live">
+          <div className="game-zone" style={matchTheme}>
+            <div className="match-kicker">
+              <span className="live-dot" />
+              Live match · {homeNation.flag} {homeNation.name} vs {awayNation.flag} {awayNation.name}
+            </div>
+            <h1>
+              {homeNation.flag} {liveMatch.homeScore} - {liveMatch.awayScore} {awayNation.flag}
+            </h1>
+            <p className="dashboard-intro">
+              Tu aides {supportingNation.flag} {supportingNation.name}. Pour l’instant le mini-jeu est remplacé par un
+              bouton simple, puis on le transformera en vrai jeu.
+            </p>
+
+            <button className="tap-game" onClick={() => setBonusPoints((points) => points + 1)} type="button">
+              <Zap aria-hidden="true" />
+              Marquer un point pour {supportingNation.name}
+            </button>
+          </div>
+
+          <aside className="match-info panel colorful-panel" style={matchTheme} aria-label="Informations du match">
+            <div className="section-title">
+              <p>Info match</p>
+              <h2>
+                {homeNation.flag} {homeNation.name} vs {awayNation.flag} {awayNation.name}
+              </h2>
+            </div>
+            <div className="scoreline">
+              <span>{homeNation.flag}</span>
+              <strong>{liveMatch.homeScore}</strong>
+              <em>{liveMatch.minute}'</em>
+              <strong>{liveMatch.awayScore}</strong>
+              <span>{awayNation.flag}</span>
+            </div>
+            <div className="timeline-list">
+              {timeline.map((item) => (
+                <div className="timeline-row" key={item.id}>
+                  <time>{item.minute}</time>
+                  <span>
+                    {item.side ? `${getNation(item.side).flag} ` : ''}
+                    {item.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </section>
+
+        <section className="dashboard-grid" aria-label="Classements du match">
+          <div className="panel">
+            <div className="section-title">
+              <p>Leaderboard</p>
+              <h2>Top joueurs du match</h2>
+            </div>
+            <div className="player-list">
+              {matchLeaders.map((player, index) => {
+                const playerCountry = getNation(player.country);
+                const supported = getNation(player.supporting);
+                return (
+                  <div className="player-row" key={player.name}>
+                    <span className="rank">{index + 1}</span>
                     <span>
-                      <strong>{nation.name}</strong>
-                      <small>{nation.supporters} fans</small>
+                      <strong>{player.name}</strong>
+                      <small>
+                        {playerCountry.flag} joueur · soutient {supported.flag} {supported.name}
+                      </small>
                     </span>
-                  </button>
-                ))}
-              </div>
-
-              <button className="primary-button full-width" onClick={() => setHasJoined(true)} type="button">
-                Continuer avec {selectedNation.name}
-                <ChevronRight aria-hidden="true" />
-              </button>
+                    <em>{formatNumber(player.points)}</em>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          <div className="leaderboard panel">
+            <div className="section-title">
+              <p>Global</p>
+              <h2>Classement pays</h2>
+            </div>
+            <ol>
+              {rankedNations.slice(0, 6).map((nation, index) => (
+                <li className={nation.code === selectedCode ? 'highlighted-row' : ''} key={nation.code}>
+                  <span className="rank">{index + 1}</span>
+                  <span className="flag">{nation.flag}</span>
+                  <span className="leader-name">{nation.name}</span>
+                  <strong>{formatNumber(nation.points)}</strong>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
       </main>
@@ -125,66 +339,124 @@ export function App() {
   }
 
   return (
-    <main className="app-shell dashboard-shell">
-      <nav className="dashboard-topbar" aria-label="Navigation du tableau de bord">
-        <button className="back-button" onClick={() => setHasJoined(false)} type="button">
-          <ArrowLeft aria-hidden="true" />
-          Changer de pays
-        </button>
-        <div className="brand dark">
-          <Shield aria-hidden="true" />
-          <span>FanBattle</span>
-        </div>
-      </nav>
+    <main className="app-shell">
+      <section
+        className="home-screen"
+        style={{
+          '--support-color': selectedNation.color,
+          '--support-accent': selectedNation.accent,
+          '--support-flag-gradient': selectedNation.flagGradient,
+        }}
+      >
+        <nav className="topbar" aria-label="Navigation principale">
+          <div className="brand">
+            <Shield aria-hidden="true" />
+            <span>FanBattle</span>
+          </div>
+          <span className="status-pill">
+            {hasSupabaseConfig ? 'Supabase connecté' : 'Démo locale'}
+          </span>
+        </nav>
 
-      <section className="dashboard-hero">
-        <div>
-          <p className="eyebrow">Tableau de bord</p>
-          <h1>
-            {selectedNation.flag} {selectedNation.name}
-          </h1>
-          <p className="dashboard-intro">
-            Chaque point marqué fait monter ton pays dans le classement mondial des supporters.
-          </p>
-        </div>
+        <div className="home-layout">
+          <section className="home-hero" aria-label="Pays sélectionné">
+            <p className="eyebrow">Ton pays</p>
+            <h1>
+              Soutiens {selectedNation.flag} {selectedNation.name}
+            </h1>
+            <p className="intro">
+              Ton pays est suggéré automatiquement selon ton navigateur. Tu peux le changer, ou rejoindre directement
+              un match live si ton pays joue.
+            </p>
+            <div className="home-actions">
+              <button className="primary-button" onClick={() => setScreen('country')} type="button">
+                Voir les stats de {selectedNation.flag} {selectedNation.name}
+                <BarChart3 aria-hidden="true" />
+              </button>
+              <button
+                className="secondary-button"
+                onClick={selectedInLiveMatch ? () => joinMatch(selectedCode) : focusLiveMatch}
+                type="button"
+              >
+                {selectedInLiveMatch ? `Jouer pour ${selectedNation.name}` : 'Voir le match live'}
+                <ChevronRight aria-hidden="true" />
+              </button>
+            </div>
+          </section>
 
-        <button className="score-button" onClick={() => setBonusPoints((points) => points + 1)} type="button">
-          <Plus aria-hidden="true" />
-          Marquer un point
-        </button>
+          <section className="live-match-card" style={matchTheme} aria-label="Match live actuel">
+            <div className="live-card-header">
+              <span>
+                <span className="live-dot" />
+                Match live
+              </span>
+              <strong>{liveMatch.minute}'</strong>
+            </div>
+
+            <div className="versus-grid">
+              <button className="team-side home-side" onClick={() => joinMatch(homeNation.code)} type="button">
+                <span className="team-flag">{homeNation.flag}</span>
+                <strong>{homeNation.name}</strong>
+                <small>{formatNumber(liveMatch.homeMatchPoints)} pts match</small>
+              </button>
+
+              <div className="match-score">
+                <Flame aria-hidden="true" />
+                <strong>
+                  {liveMatch.homeScore} - {liveMatch.awayScore}
+                </strong>
+                <span>Choisis un côté</span>
+              </div>
+
+              <button className="team-side away-side" onClick={() => joinMatch(awayNation.code)} type="button">
+                <span className="team-flag">{awayNation.flag}</span>
+                <strong>{awayNation.name}</strong>
+                <small>{formatNumber(liveMatch.awayMatchPoints)} pts match</small>
+              </button>
+            </div>
+
+            <div className="live-scan" aria-hidden="true" />
+          </section>
+        </div>
       </section>
 
-      <section className="stats-grid" aria-label="Résumé du pays">
-        <div className="stat-card">
-          <Medal aria-hidden="true" />
-          <span>Position</span>
-          <strong>#{selectedRank}</strong>
+      <section className="home-content" aria-label="Classements et pays">
+        <div className="country-panel">
+          <div className="section-title">
+            <p>Changer</p>
+            <h2>Pays détecté ou choisi</h2>
+          </div>
+          <div className="nation-grid compact">
+            {nations.slice(0, 8).map((nation) => (
+              <button
+                className={nation.code === selectedCode ? 'nation-tile active' : 'nation-tile'}
+                key={nation.code}
+                onClick={() => setSelectedCode(nation.code)}
+                style={{ '--nation-color': nation.color, '--nation-flag-gradient': nation.flagGradient }}
+                type="button"
+              >
+                <span className="flag">{nation.flag}</span>
+                <span>
+                  <strong>{nation.name}</strong>
+                  <small>{formatNumber(nation.supporters)} fans</small>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="stat-card">
-          <Trophy aria-hidden="true" />
-          <span>Points ajoutés</span>
-          <strong>{bonusPoints.toLocaleString('fr-FR')}</strong>
-        </div>
-        <div className="stat-card">
-          <Users aria-hidden="true" />
-          <span>Supporters</span>
-          <strong>{selectedNation.supporters}</strong>
-        </div>
-      </section>
 
-      <section className="dashboard-grid" aria-label="Classement et historique">
         <div className="leaderboard panel">
           <div className="section-title">
-            <p>Classement</p>
-            <h2>Top nations</h2>
+            <p>Global</p>
+            <h2>Classement pays</h2>
           </div>
           <ol>
-            {rankedNations.map((nation, index) => (
+            {rankedNations.slice(0, 7).map((nation, index) => (
               <li className={nation.code === selectedCode ? 'highlighted-row' : ''} key={nation.code}>
                 <span className="rank">{index + 1}</span>
                 <span className="flag">{nation.flag}</span>
                 <span className="leader-name">{nation.name}</span>
-                <strong>{nation.points.toLocaleString('fr-FR')}</strong>
+                <strong>{formatNumber(nation.points)}</strong>
               </li>
             ))}
           </ol>
@@ -192,24 +464,41 @@ export function App() {
 
         <div className="panel">
           <div className="section-title">
-            <p>Historique</p>
-            <h2>Derniers matchs</h2>
+            <p>Résumé</p>
+            <h2>
+              {selectedNation.flag} {selectedNation.name}
+            </h2>
+          </div>
+          <div className="country-stats">
+            <div>
+              <Medal aria-hidden="true" />
+              <span>Rang global</span>
+              <strong>#{selectedRank}</strong>
+            </div>
+            <div>
+              <Users aria-hidden="true" />
+              <span>Fans</span>
+              <strong>{formatNumber(selectedNation.supporters)}</strong>
+            </div>
+            <div>
+              <Trophy aria-hidden="true" />
+              <span>Points</span>
+              <strong>{formatNumber(selectedNation.points)}</strong>
+            </div>
           </div>
           <div className="history-list">
-            {fallbackMatches.map((match) => (
-              <div className="history-row" key={match.id}>
+            {recentCountryGames.map((game) => (
+              <div className="history-row" key={game.id}>
                 <Clock3 aria-hidden="true" />
                 <span>
-                  <strong>{match.title}</strong>
-                  <small>{match.time}</small>
+                  <strong>
+                    {selectedNation.flag} {game.title}
+                  </strong>
+                  <small>{game.time}</small>
                 </span>
-                <em>{match.result}</em>
+                <em>{game.result}</em>
               </div>
             ))}
-          </div>
-          <div className="next-step">
-            <BadgeCheck aria-hidden="true" />
-            <span>Le bouton “Marquer un point” deviendra ensuite l’entrée vers le mini-jeu.</span>
           </div>
         </div>
       </section>

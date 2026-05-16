@@ -1,0 +1,72 @@
+Projet : Compétition Mondiale des Supporters – Coupe du Monde 2026
+
+Concept
+Créer une compétition parallèle à la Coupe du Monde où les supporters du monde entier peuvent représenter leur pays et accumuler des points ensemble via des mini-jeux, prédictions ou actions en direct pendant les matchs.
+
+Objectif
+Profiter de l’événement mondial de la Coupe du Monde 2026 pour créer un projet 100% numérique, viral et monétisable sans gros investissement initial.
+
+Idée principale
+Chaque supporter choisit une nation.
+Pendant les matchs, les fans participent à des mini-jeux simples :
+- tirs au but
+- prédictions de score
+- quiz en direct
+- réactions en temps réel
+- défis collectifs
+
+Les points de tous les supporters d’un pays sont additionnés pour créer un classement mondial des fans.
+
+Exemple inspirant
+Google avait déjà créé un mini-jeu de tirs au but pendant une Coupe du Monde directement dans le navigateur. L’idée serait de reprendre cette logique mais avec un aspect communautaire et compétitif beaucoup plus poussé.
+
+Pourquoi cela peut marcher
+- Les supporters adorent représenter leur pays.
+- La Coupe du Monde crée naturellement du trafic massif.
+- Les mini-jeux simples fonctionnent bien sur mobile.
+- Aspect communautaire et patriotique.
+- Peut devenir viral sans avoir besoin d’influenceurs.
+
+Monétisation possible
+- Publicités
+- Classements premium
+- Badges et cosmétiques virtuels
+- Sponsoring
+- Abonnement VIP
+- Défis sponsorisés
+
+Version MVP (simple à développer)
+1. Choix du pays
+2. Un mini-jeu principal (ex : tirs au but)
+3. Classement mondial par pays
+4. Connexion Google/Discord
+5. Site web mobile simple
+
+Fonctionnalités futures
+- Événements en direct synchronisés avec les matchs
+- Clan/supporters groups
+- Paris gratuits avec points virtuels
+- IA commentatrice ou mascotte
+- Mode fantasy football simplifié
+
+Points forts stratégiques
+- Pas besoin de licence officielle FIFA si le branding est évité.
+- Peut être développé progressivement.
+- Très bon potentiel viral international.
+- Possible même avec petit budget.
+
+Technologies possibles
+- Frontend : React / Next.js
+- Backend : Firebase ou Supabase
+- Temps réel : WebSockets
+- Hébergement : Vercel
+- Authentification : Google OAuth
+
+Risques
+- Forte concurrence pendant la Coupe du Monde
+- Nécessité d’une UX très simple
+- Les serveurs doivent tenir pendant les pics de trafic
+
+Conclusion
+Le projet repose surtout sur l’effet communautaire et émotionnel des supporters. Le but n’est pas de créer un jeu complexe mais une expérience rapide, fun et compétitive qui donne aux fans l’impression d’aider leur pays en direct pendant la Coupe du Monde.
+

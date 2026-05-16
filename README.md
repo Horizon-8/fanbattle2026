@@ -5,8 +5,11 @@ FanBattle 2026 est une compétition numérique entre supporters: chaque fan choi
 ## MVP
 
 - Choix d'une nation
+- Pays suggéré automatiquement selon la région du navigateur
 - Mini-jeu de tirs au but
-- Actions rapides de matchday
+- Tableau de bord après sélection
+- Bouton provisoire pour marquer un point
+- Historique simple des derniers matchs
 - Classement mondial par pays
 - Interface web mobile-first
 

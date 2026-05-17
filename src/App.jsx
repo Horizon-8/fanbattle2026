@@ -11,9 +11,9 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { hasSupabaseConfig } from './supabaseClient';
+import { fetchCountries, fetchCurrentMatch, fetchMatchTimeline, hasSupabaseConfig } from './supabaseClient';
 
-const nations = [
+const fallbackNations = [
   { code: 'MAR', region: 'MA', flag: '🇲🇦', name: 'Maroc', supporters: 42800, points: 184200, color: '#c1272d', accent: '#006233', flagGradient: 'linear-gradient(90deg, #c1272d, #006233)' },
   { code: 'FRA', region: 'FR', flag: '🇫🇷', name: 'France', supporters: 39100, points: 173870, color: '#002654', accent: '#ed2939', flagGradient: 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)' },
   { code: 'BRA', region: 'BR', flag: '🇧🇷', name: 'Brésil', supporters: 38400, points: 169540, color: '#009739', accent: '#ffdf00', flagGradient: 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)' },
@@ -40,7 +40,7 @@ const fallbackLiveMatch = {
   awayMatchPoints: 44790,
 };
 
-const timeline = [
+const fallbackTimeline = [
   { id: 1, minute: "67'", text: 'Grosse pression côté France, les supporters accélèrent.', side: 'FRA' },
   { id: 2, minute: "61'", text: 'Portugal réduit l’écart dans le défi collectif.', side: 'POR' },
   { id: 3, minute: "52'", text: 'Nouveau bonus de série débloqué par la France.', side: 'FRA' },
@@ -63,21 +63,21 @@ const recentCountryGames = [
 function getSuggestedNationCode() {
   const locale = navigator.languages?.[0] || navigator.language || '';
   const region = locale.split('-')[1]?.toUpperCase();
-  const match = nations.find((nation) => nation.region === region);
+  const match = fallbackNations.find((nation) => nation.region === region);
 
   return match?.code || 'FRA';
 }
 
-function getNation(code) {
+function getNation(code, nations) {
   return nations.find((nation) => nation.code === code) ?? nations[0];
 }
 
-function getKnownNation(code) {
+function getKnownNation(code, nations) {
   return nations.find((nation) => nation.code === code) ?? null;
 }
 
-function getMatchSide(code, match) {
-  const nation = getKnownNation(code);
+function getMatchSide(code, match, nations) {
+  const nation = getKnownNation(code, nations);
 
   if (nation) return nation;
 
@@ -107,7 +107,7 @@ function getMatchSide(code, match) {
     };
   }
 
-  return getNation(code);
+  return getNation(code, nations);
 }
 
 function formatNumber(value) {
@@ -119,14 +119,17 @@ export function App() {
   const [screen, setScreen] = useState('home');
   const [supportingCode, setSupportingCode] = useState(null);
   const [bonusPoints, setBonusPoints] = useState(0);
+  const [nations, setNations] = useState(fallbackNations);
   const [liveMatches, setLiveMatches] = useState([]);
+  const [supabaseMatch, setSupabaseMatch] = useState(null);
+  const [timeline, setTimeline] = useState(fallbackTimeline);
   const [matchSource, setMatchSource] = useState('demo');
 
-  const liveMatch = liveMatches[0] ?? fallbackLiveMatch;
-  const selectedNation = getNation(selectedCode);
-  const homeNation = getMatchSide(liveMatch.homeCode, liveMatch);
-  const awayNation = getMatchSide(liveMatch.awayCode, liveMatch);
-  const supportingNation = supportingCode ? getMatchSide(supportingCode, liveMatch) : selectedNation;
+  const liveMatch = liveMatches[0] ?? supabaseMatch ?? fallbackLiveMatch;
+  const selectedNation = getNation(selectedCode, nations);
+  const homeNation = getMatchSide(liveMatch.homeCode, liveMatch, nations);
+  const awayNation = getMatchSide(liveMatch.awayCode, liveMatch, nations);
+  const supportingNation = supportingCode ? getMatchSide(supportingCode, liveMatch, nations) : selectedNation;
   const selectedInLiveMatch = [liveMatch.homeCode, liveMatch.awayCode].includes(selectedCode);
 
   const matchTheme = {
@@ -146,7 +149,7 @@ export function App() {
       nations
         .map((nation) => ({
           ...nation,
-          points: nation.code === supportingCode ? nation.points + bonusPoints : nation.points,
+          points: supportingCode && nation.code === supportingCode ? nation.points + bonusPoints : nation.points,
         }))
         .sort((a, b) => b.points - a.points),
     [bonusPoints, supportingCode],
@@ -156,6 +159,29 @@ export function App() {
 
   useEffect(() => {
     let isMounted = true;
+
+    async function loadSupabaseData() {
+      const [countries, currentMatch] = await Promise.all([
+        fetchCountries(),
+        fetchCurrentMatch(),
+      ]);
+
+      if (!isMounted) return;
+
+      if (countries.length) {
+        setNations(countries);
+      }
+
+      if (currentMatch) {
+        setSupabaseMatch(currentMatch);
+        setMatchSource('supabase');
+
+        const currentTimeline = await fetchMatchTimeline(currentMatch.id);
+        if (isMounted && currentTimeline.length) {
+          setTimeline(currentTimeline);
+        }
+      }
+    }
 
     async function loadLiveMatches() {
       try {
@@ -176,6 +202,7 @@ export function App() {
       }
     }
 
+    loadSupabaseData();
     loadLiveMatches();
     const interval = window.setInterval(loadLiveMatches, 30000);
 
@@ -358,7 +385,7 @@ export function App() {
                 <div className="timeline-row" key={item.id}>
                   <time>{item.minute}</time>
                   <span>
-                    {item.side ? `${getNation(item.side).flag} ` : ''}
+                    {item.side ? `${getNation(item.side, nations).flag} ` : ''}
                     {item.text}
                   </span>
                 </div>
@@ -375,8 +402,8 @@ export function App() {
             </div>
             <div className="player-list">
               {matchLeaders.map((player, index) => {
-                const playerCountry = getNation(player.country);
-                const supported = getNation(player.supporting);
+                const playerCountry = getNation(player.country, nations);
+                const supported = getNation(player.supporting, nations);
                 return (
                   <div className="player-row" key={player.name}>
                     <span className="rank">{index + 1}</span>
@@ -464,7 +491,7 @@ export function App() {
             <div className="live-card-header">
               <span>
                 <span className="live-dot" />
-                Match live · {matchSource === 'api' ? 'API' : 'démo'}
+                Match live · {matchSource === 'api' ? 'API' : matchSource === 'supabase' ? 'Supabase' : 'démo'}
               </span>
               <strong>{liveMatch.minute}'</strong>
             </div>

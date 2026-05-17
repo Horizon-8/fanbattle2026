@@ -140,34 +140,182 @@ export async function fetchScoreTotals() {
   );
 }
 
-export async function addScoreEvent({ matchId, supportingCode, points = 1, source = 'tap' }) {
-  if (!supabase || !matchId || !supportingCode) {
+export async function getOrCreateProfile(displayName, selectedCountryCode) {
+  if (!supabase) return null;
+
+  const cleanName = displayName.trim();
+  if (!cleanName) return null;
+
+  const normalizedName = cleanName.toLowerCase();
+  const { data: existing, error: existingError } = await supabase
+    .from('profiles')
+    .select('id, display_name, selected_country_code')
+    .eq('normalized_display_name', normalizedName)
+    .maybeSingle();
+
+  if (existingError) {
+    console.error('Supabase profile lookup error', existingError);
+    return null;
+  }
+
+  if (existing) return existing;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert({
+      display_name: cleanName,
+      normalized_display_name: normalizedName,
+      selected_country_code: selectedCountryCode || null,
+    })
+    .select('id, display_name, selected_country_code')
+    .single();
+
+  if (error) {
+    console.error('Supabase profile insert error', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function upsertApiTeam({ code, name, color, accent, teamType = 'unknown', countryCode = null }) {
+  if (!supabase || !code || !name) return null;
+
+  const { data, error } = await supabase
+    .from('teams')
+    .upsert(
+      {
+        external_provider: 'app',
+        external_id: code,
+        name,
+        short_name: code,
+        country_code: countryCode,
+        team_type: teamType,
+        color,
+        accent,
+      },
+      { onConflict: 'external_provider,external_id' },
+    )
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('Supabase team upsert error', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function upsertAppMatch(match, homeTeamId, awayTeamId) {
+  if (!supabase || !match?.id || !homeTeamId || !awayTeamId) return null;
+
+  const { data, error } = await supabase
+    .from('matches')
+    .upsert(
+      {
+        external_provider: match.source || 'app',
+        external_id: String(match.id),
+        home_team_id: homeTeamId,
+        away_team_id: awayTeamId,
+        home_score: match.homeScore || 0,
+        away_score: match.awayScore || 0,
+        minute: match.minute || 0,
+        status: 'live',
+        last_synced_at: new Date().toISOString(),
+      },
+      { onConflict: 'external_provider,external_id' },
+    )
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('Supabase match upsert error', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function addMatchPoint({ match, supportingSide, profile, points = 1 }) {
+  if (!supabase || !match || !supportingSide || !profile) {
     return { ok: false, reason: 'missing-config' };
   }
 
-  const { data: team, error: teamError } = await supabase
-    .from('teams')
-    .select('id')
-    .eq('country_code', supportingCode)
-    .limit(1)
-    .maybeSingle();
+  const homeTeam = await upsertApiTeam({
+    code: match.homeCode,
+    name: match.homeName,
+    color: supportingSide.code === match.homeCode ? supportingSide.color : undefined,
+    accent: supportingSide.code === match.homeCode ? supportingSide.accent : undefined,
+    teamType: match.homeCode?.startsWith('TEAM_') ? 'club' : 'country',
+    countryCode: match.homeCode?.startsWith('TEAM_') ? null : match.homeCode,
+  });
 
-  if (teamError || !team) {
-    console.error('Supabase team lookup error', teamError);
-    return { ok: false, reason: 'missing-team' };
-  }
+  const awayTeam = await upsertApiTeam({
+    code: match.awayCode,
+    name: match.awayName,
+    color: supportingSide.code === match.awayCode ? supportingSide.color : undefined,
+    accent: supportingSide.code === match.awayCode ? supportingSide.accent : undefined,
+    teamType: match.awayCode?.startsWith('TEAM_') ? 'club' : 'country',
+    countryCode: match.awayCode?.startsWith('TEAM_') ? null : match.awayCode,
+  });
+
+  if (!homeTeam || !awayTeam) return { ok: false, reason: 'missing-team' };
+
+  const persistedMatch = await upsertAppMatch(match, homeTeam.id, awayTeam.id);
+  if (!persistedMatch) return { ok: false, reason: 'missing-match' };
+
+  const supportingTeamId = supportingSide.code === match.homeCode ? homeTeam.id : awayTeam.id;
 
   const { error } = await supabase.from('score_events').insert({
-    match_id: matchId,
-    supporting_team_id: team.id,
+    match_id: persistedMatch.id,
+    profile_id: profile.id,
+    supporting_team_id: supportingTeamId,
     points,
-    source,
+    source: 'tap',
   });
 
   if (error) {
-    console.error('Supabase score insert error', error);
+    console.error('Supabase match point insert error', error);
     return { ok: false, reason: 'insert-failed' };
   }
 
-  return { ok: true };
+  return { ok: true, matchId: persistedMatch.id };
+}
+
+export async function fetchMatchLeaderboard(matchId) {
+  if (!supabase || !matchId) return [];
+
+  const { data, error } = await supabase
+    .from('score_events')
+    .select(`
+      points,
+      profile:profile_id(id, display_name, selected_country_code),
+      team:supporting_team_id(id, name, country_code)
+    `)
+    .eq('match_id', matchId);
+
+  if (error) {
+    console.error('Supabase match leaderboard error', error);
+    return [];
+  }
+
+  const grouped = new Map();
+
+  for (const event of data || []) {
+    const profileId = event.profile?.id || 'anonymous';
+    const current = grouped.get(profileId) || {
+      profileId,
+      displayName: event.profile?.display_name || 'Anonyme',
+      selectedCountryCode: event.profile?.selected_country_code || null,
+      supportingTeamName: event.team?.name || 'Équipe',
+      supportingCountryCode: event.team?.country_code || null,
+      points: 0,
+    };
+
+    current.points += event.points || 0;
+    grouped.set(profileId, current);
+  }
+
+  return [...grouped.values()].sort((a, b) => b.points - a.points);
 }

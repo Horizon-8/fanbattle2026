@@ -64,7 +64,8 @@ Si aucune clé n'est configurée, ou si aucun match live n'est disponible, l'app
 Dans Supabase, ouvre **SQL Editor**, puis exécute ces fichiers dans cet ordre :
 
 1. `supabase/migrations/001_initial_schema.sql`
-2. `supabase/seed.sql`
+2. `supabase/migrations/002_profiles_and_api_scoring.sql`
+3. `supabase/seed.sql`
 
 Le schéma sépare :
 
@@ -83,6 +84,32 @@ Pour repartir à zéro pendant les tests, exécute :
 ```text
 supabase/reset_scores.sql
 ```
+
+Les pseudos sont stockés dans `profiles`. Si un visiteur réutilise le même pseudo, ses points sont regroupés dans le leaderboard du match.
+
+Note sécurité : la migration `002_profiles_and_api_scoring.sql` autorise temporairement le navigateur à créer des équipes et matchs API pour le prototype. En production, cette logique devra passer par une Vercel Function ou une Supabase Edge Function.
+
+## Importer les équipes d'une compétition API
+
+Exécute d'abord :
+
+```text
+supabase/migrations/003_competitions.sql
+```
+
+Ensuite, avec `API_FOOTBALL_KEY`, `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` configurées dans Vercel, appelle :
+
+```text
+/api/import-competition-teams?league=39&season=2025&name=Premier%20League&country=England
+```
+
+Cela crée ou met à jour :
+
+- `competitions`
+- `teams`
+- `competition_teams`
+
+API-FOOTBALL utilise l'endpoint teams avec `league` et `season`, par exemple `teams?league=39&season=2025`.
 
 ## Source des données dans l'app
 

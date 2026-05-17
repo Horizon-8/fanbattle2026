@@ -12,11 +12,13 @@ import {
   Zap,
 } from 'lucide-react';
 import {
-  addScoreEvent,
+  addMatchPoint,
+  fetchMatchLeaderboard,
   fetchCountries,
   fetchCurrentMatch,
   fetchMatchTimeline,
   fetchScoreTotals,
+  getOrCreateProfile,
   hasSupabaseConfig,
 } from './supabaseClient';
 
@@ -124,6 +126,9 @@ export function App() {
   const [nations, setNations] = useState(fallbackNations);
   const [countryTotals, setCountryTotals] = useState({});
   const [matchTeamTotals, setMatchTeamTotals] = useState({});
+  const [profile, setProfile] = useState(null);
+  const [pseudoInput, setPseudoInput] = useState(window.localStorage.getItem('fanbattle:pseudo') || '');
+  const [matchLeaderboard, setMatchLeaderboard] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
   const [supabaseMatch, setSupabaseMatch] = useState(null);
   const [timeline, setTimeline] = useState(fallbackTimeline);
@@ -191,6 +196,11 @@ export function App() {
         if (isMounted && currentTimeline.length) {
           setTimeline(currentTimeline);
         }
+
+        const currentLeaderboard = await fetchMatchLeaderboard(currentMatch.id);
+        if (isMounted) {
+          setMatchLeaderboard(currentLeaderboard);
+        }
       }
     }
 
@@ -220,6 +230,27 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const storedPseudo = window.localStorage.getItem('fanbattle:pseudo');
+
+    async function restoreProfile() {
+      if (!storedPseudo) return;
+
+      const restoredProfile = await getOrCreateProfile(storedPseudo, selectedCode);
+      if (!isMounted || !restoredProfile) return;
+
+      setProfile(restoredProfile);
+      setPseudoInput(restoredProfile.display_name);
+    }
+
+    restoreProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCode]);
+
   function joinMatch(sideCode) {
     setSupportingCode(sideCode);
     setScreen('match');
@@ -231,19 +262,46 @@ export function App() {
     setMatchTeamTotals(totals.matchTeamTotals);
   }
 
+  async function refreshMatchLeaderboard(matchId = liveMatch.id) {
+    const leaderboard = await fetchMatchLeaderboard(matchId);
+    setMatchLeaderboard(leaderboard);
+  }
+
+  async function handlePseudoSubmit(event) {
+    event.preventDefault();
+    setScoreStatus('Connexion du pseudo...');
+
+    const nextProfile = await getOrCreateProfile(pseudoInput, selectedNation.code);
+    if (!nextProfile) {
+      setScoreStatus('Pseudo impossible à créer');
+      return;
+    }
+
+    window.localStorage.setItem('fanbattle:pseudo', nextProfile.display_name);
+    setProfile(nextProfile);
+    setPseudoInput(nextProfile.display_name);
+    setScoreStatus(`Connecté: ${nextProfile.display_name}`);
+  }
+
   async function handleScorePoint() {
+    if (!profile) {
+      setScoreStatus('Entre ton pseudo avant de marquer');
+      return;
+    }
+
     setScoreStatus('Enregistrement...');
 
-    const result = await addScoreEvent({
-      matchId: liveMatch.id,
-      supportingCode: supportingNation.code,
+    const result = await addMatchPoint({
+      match: liveMatch,
+      supportingSide: supportingNation,
+      profile,
       points: 1,
-      source: 'tap',
     });
 
     if (result.ok) {
       setBonusPoints(0);
       await refreshScoreTotals();
+      await refreshMatchLeaderboard(result.matchId);
       setScoreStatus('+1 point enregistré');
       return;
     }
@@ -395,6 +453,22 @@ export function App() {
               bouton simple, puis on le transformera en vrai jeu.
             </p>
 
+            <form className="pseudo-form" onSubmit={handlePseudoSubmit}>
+              <label htmlFor="pseudo">Pseudo</label>
+              <div>
+                <input
+                  id="pseudo"
+                  maxLength={24}
+                  minLength={2}
+                  onChange={(event) => setPseudoInput(event.target.value)}
+                  placeholder="cat123"
+                  value={pseudoInput}
+                />
+                <button type="submit">{profile ? 'Changer' : 'Valider'}</button>
+              </div>
+              {profile ? <small>Connecté comme {profile.display_name}</small> : null}
+            </form>
+
             <button className="tap-game" onClick={handleScorePoint} type="button">
               <Zap aria-hidden="true" />
               Marquer un point pour {supportingNation.name}
@@ -437,9 +511,34 @@ export function App() {
               <h2>Top joueurs du match</h2>
             </div>
             <div className="player-list">
-              <div className="empty-state">
-                Aucun joueur réel pour l’instant. La prochaine étape sera de créer des profils anonymes.
-              </div>
+              {matchLeaderboard.length ? (
+                matchLeaderboard.map((player, index) => {
+                  const playerCountry = player.selectedCountryCode
+                    ? getNation(player.selectedCountryCode, nations)
+                    : null;
+                  const supported = player.supportingCountryCode
+                    ? getNation(player.supportingCountryCode, nations)
+                    : null;
+
+                  return (
+                    <div className="player-row" key={player.profileId}>
+                      <span className="rank">{index + 1}</span>
+                      <span>
+                        <strong>{player.displayName}</strong>
+                        <small>
+                          {playerCountry ? `${playerCountry.flag} joueur · ` : ''}
+                          soutient {supported ? `${supported.flag} ${supported.name}` : player.supportingTeamName}
+                        </small>
+                      </span>
+                      <em>{formatNumber(player.points)}</em>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="empty-state">
+                  Aucun point réel sur ce match pour l’instant.
+                </div>
+              )}
             </div>
           </div>
 

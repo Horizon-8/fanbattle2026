@@ -205,6 +205,49 @@ h1 {
   cursor: pointer;
 }
 
+.pseudo-form {
+  display: grid;
+  gap: 8px;
+  width: min(420px, 100%);
+  margin-top: 24px;
+}
+
+.pseudo-form label,
+.pseudo-form small {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+}
+
+.pseudo-form div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.pseudo-form input {
+  min-height: 48px;
+  min-width: 0;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 8px;
+  color: #17212b;
+  background: rgba(255, 255, 255, 0.94);
+  font: inherit;
+  font-weight: 800;
+}
+
+.pseudo-form button {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  color: #061712;
+  background: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
 .primary-button {
   border: 0;
   color: #061712;

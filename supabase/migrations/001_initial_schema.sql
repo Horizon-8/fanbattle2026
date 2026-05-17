@@ -37,6 +37,7 @@ create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid unique,
   display_name text not null,
+  normalized_display_name text unique,
   detected_country_code text references public.countries(code),
   selected_country_code text references public.countries(code),
   created_at timestamptz not null default now(),

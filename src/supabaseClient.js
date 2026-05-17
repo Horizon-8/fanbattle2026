@@ -164,13 +164,22 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
     .from('profiles')
     .insert({
       display_name: cleanName,
-      normalized_display_name: normalizedName,
       selected_country_code: selectedCountryCode || null,
     })
     .select('id, display_name, selected_country_code')
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      const { data: duplicate } = await supabase
+        .from('profiles')
+        .select('id, display_name, selected_country_code')
+        .eq('normalized_display_name', normalizedName)
+        .maybeSingle();
+
+      if (duplicate) return duplicate;
+    }
+
     console.error('Supabase profile insert error', error);
     return null;
   }
@@ -280,7 +289,12 @@ export async function addMatchPoint({ match, supportingSide, profile, points = 1
     return { ok: false, reason: 'insert-failed' };
   }
 
-  return { ok: true, matchId: persistedMatch.id };
+  return {
+    ok: true,
+    matchId: persistedMatch.id,
+    homeTeamId: homeTeam.id,
+    awayTeamId: awayTeam.id,
+  };
 }
 
 export async function fetchMatchLeaderboard(matchId) {

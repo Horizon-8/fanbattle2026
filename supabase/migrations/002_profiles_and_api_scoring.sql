@@ -5,6 +5,10 @@ alter table public.profiles
   add column if not exists normalized_display_name text;
 
 update public.profiles
+set display_name = concat('fan-', left(id::text, 8))
+where display_name is null or trim(display_name) = '';
+
+update public.profiles
 set normalized_display_name = lower(trim(display_name))
 where normalized_display_name is null;
 
@@ -33,6 +37,12 @@ on public.profiles for update
 to anon, authenticated
 using (true)
 with check (true);
+
+drop policy if exists "Public insert profiles" on public.profiles;
+create policy "Public insert profiles"
+on public.profiles for insert
+to anon, authenticated
+with check (display_name is not null and length(trim(display_name)) >= 2);
 
 -- Prototype policy: lets the browser create API teams/matches for testing.
 -- Replace this later with a Vercel Function or Supabase Edge Function.

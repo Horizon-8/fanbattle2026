@@ -131,6 +131,7 @@ export function App() {
   const [matchLeaderboard, setMatchLeaderboard] = useState([]);
   const [liveMatches, setLiveMatches] = useState([]);
   const [supabaseMatch, setSupabaseMatch] = useState(null);
+  const [persistedMatchId, setPersistedMatchId] = useState(null);
   const [timeline, setTimeline] = useState(fallbackTimeline);
   const [scoreStatus, setScoreStatus] = useState('');
 
@@ -154,9 +155,9 @@ export function App() {
     '--support-flag-gradient': supportingNation.flagGradient,
   };
   const homeMatchPoints =
-    matchTeamTotals[`${liveMatch.id}:${liveMatch.homeTeamId}`] || liveMatch.homeMatchPoints || 0;
+    matchTeamTotals[`${persistedMatchId || liveMatch.id}:${liveMatch.homeTeamId}`] || liveMatch.homeMatchPoints || 0;
   const awayMatchPoints =
-    matchTeamTotals[`${liveMatch.id}:${liveMatch.awayTeamId}`] || liveMatch.awayMatchPoints || 0;
+    matchTeamTotals[`${persistedMatchId || liveMatch.id}:${liveMatch.awayTeamId}`] || liveMatch.awayMatchPoints || 0;
 
   const rankedNations = useMemo(
     () =>
@@ -192,6 +193,7 @@ export function App() {
 
       if (currentMatch) {
         setSupabaseMatch(currentMatch);
+        setPersistedMatchId(currentMatch.id);
         const currentTimeline = await fetchMatchTimeline(currentMatch.id);
         if (isMounted && currentTimeline.length) {
           setTimeline(currentTimeline);
@@ -299,6 +301,22 @@ export function App() {
     });
 
     if (result.ok) {
+      if (result.matchId) {
+        setPersistedMatchId(result.matchId);
+      }
+      if (result.homeTeamId || result.awayTeamId) {
+        setLiveMatches((matches) =>
+          matches.map((match) =>
+            match.id === liveMatch.id
+              ? {
+                  ...match,
+                  homeTeamId: result.homeTeamId || match.homeTeamId,
+                  awayTeamId: result.awayTeamId || match.awayTeamId,
+                }
+              : match,
+          ),
+        );
+      }
       setBonusPoints(0);
       await refreshScoreTotals();
       await refreshMatchLeaderboard(result.matchId);
@@ -474,6 +492,19 @@ export function App() {
               Marquer un point pour {supportingNation.name}
             </button>
             {scoreStatus ? <p className="score-status">{scoreStatus}</p> : null}
+
+            <div className="match-points-grid" aria-label="Points FanBattle du match">
+              <div>
+                <span>{homeNation.flag}</span>
+                <strong>{homeNation.name}</strong>
+                <em>{formatNumber(homeMatchPoints)} pts FanBattle</em>
+              </div>
+              <div>
+                <span>{awayNation.flag}</span>
+                <strong>{awayNation.name}</strong>
+                <em>{formatNumber(awayMatchPoints)} pts FanBattle</em>
+              </div>
+            </div>
           </div>
 
           <aside className="match-info panel colorful-panel" style={matchTheme} aria-label="Informations du match">

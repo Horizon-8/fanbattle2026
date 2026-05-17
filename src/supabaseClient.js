@@ -148,20 +148,6 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
 
   const normalizedName = cleanName.toLowerCase();
 
-  const { data: rpcData, error: rpcError } = await supabase
-    .rpc('get_or_create_profile', {
-      p_display_name: cleanName,
-      p_selected_country_code: selectedCountryCode || null,
-    });
-
-  if (!rpcError && rpcData?.length) {
-    return rpcData[0];
-  }
-
-  if (rpcError) {
-    console.error('Supabase profile RPC error', rpcError);
-  }
-
   const { data: existing, error: existingError } = await supabase
     .from('profiles')
     .select('id, display_name, selected_country_code')
@@ -177,10 +163,14 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .insert({
-      display_name: cleanName,
-      selected_country_code: selectedCountryCode || null,
-    })
+    .upsert(
+      {
+        display_name: cleanName,
+        normalized_display_name: normalizedName,
+        selected_country_code: selectedCountryCode || null,
+      },
+      { onConflict: 'normalized_display_name' },
+    )
     .select('id, display_name, selected_country_code')
     .single();
 

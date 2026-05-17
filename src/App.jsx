@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   BarChart3,
@@ -25,11 +25,15 @@ const nations = [
   { code: 'POR', region: 'PT', flag: '🇵🇹', name: 'Portugal', supporters: 23300, points: 125700, color: '#006600', accent: '#ff0000', flagGradient: 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)' },
 ];
 
-const liveMatch = {
+const fallbackLiveMatch = {
   id: 'fra-por-live',
+  source: 'demo',
   minute: 67,
+  status: 'LIVE',
   homeCode: 'FRA',
   awayCode: 'POR',
+  homeName: 'France',
+  awayName: 'Portugal',
   homeScore: 2,
   awayScore: 1,
   homeMatchPoints: 48240,
@@ -68,6 +72,44 @@ function getNation(code) {
   return nations.find((nation) => nation.code === code) ?? nations[0];
 }
 
+function getKnownNation(code) {
+  return nations.find((nation) => nation.code === code) ?? null;
+}
+
+function getMatchSide(code, match) {
+  const nation = getKnownNation(code);
+
+  if (nation) return nation;
+
+  if (match.homeCode === code) {
+    return {
+      code,
+      flag: '⚽',
+      name: match.homeName || 'Équipe domicile',
+      supporters: 0,
+      points: 0,
+      color: '#264653',
+      accent: '#f4a261',
+      flagGradient: 'linear-gradient(135deg, #264653, #2a9d8f, #f4a261)',
+    };
+  }
+
+  if (match.awayCode === code) {
+    return {
+      code,
+      flag: '⚽',
+      name: match.awayName || 'Équipe extérieure',
+      supporters: 0,
+      points: 0,
+      color: '#7b2cbf',
+      accent: '#ffbe0b',
+      flagGradient: 'linear-gradient(135deg, #7b2cbf, #ff006e, #ffbe0b)',
+    };
+  }
+
+  return getNation(code);
+}
+
 function formatNumber(value) {
   return new Intl.NumberFormat('fr-FR').format(value);
 }
@@ -77,11 +119,14 @@ export function App() {
   const [screen, setScreen] = useState('home');
   const [supportingCode, setSupportingCode] = useState(null);
   const [bonusPoints, setBonusPoints] = useState(0);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [matchSource, setMatchSource] = useState('demo');
 
+  const liveMatch = liveMatches[0] ?? fallbackLiveMatch;
   const selectedNation = getNation(selectedCode);
-  const homeNation = getNation(liveMatch.homeCode);
-  const awayNation = getNation(liveMatch.awayCode);
-  const supportingNation = supportingCode ? getNation(supportingCode) : selectedNation;
+  const homeNation = getMatchSide(liveMatch.homeCode, liveMatch);
+  const awayNation = getMatchSide(liveMatch.awayCode, liveMatch);
+  const supportingNation = supportingCode ? getMatchSide(supportingCode, liveMatch) : selectedNation;
   const selectedInLiveMatch = [liveMatch.homeCode, liveMatch.awayCode].includes(selectedCode);
 
   const matchTheme = {
@@ -108,6 +153,37 @@ export function App() {
   );
 
   const selectedRank = rankedNations.findIndex((nation) => nation.code === selectedCode) + 1;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLiveMatches() {
+      try {
+        const response = await fetch('/api/live-matches');
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        if (!isMounted) return;
+
+        if (payload.matches?.length) {
+          setLiveMatches(payload.matches);
+          setMatchSource(payload.configured ? 'api' : 'demo');
+        }
+      } catch {
+        if (isMounted) {
+          setMatchSource('demo');
+        }
+      }
+    }
+
+    loadLiveMatches();
+    const interval = window.setInterval(loadLiveMatches, 30000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   function joinMatch(sideCode) {
     setSupportingCode(sideCode);
@@ -388,7 +464,7 @@ export function App() {
             <div className="live-card-header">
               <span>
                 <span className="live-dot" />
-                Match live
+                Match live · {matchSource === 'api' ? 'API' : 'démo'}
               </span>
               <strong>{liveMatch.minute}'</strong>
             </div>

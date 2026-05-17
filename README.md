@@ -42,6 +42,23 @@ Ces variables sont publiques côté navigateur. Les clés secrètes Supabase ne 
 2. Ajoute les mêmes variables `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY`.
 3. Lance un déploiement. Vercel utilisera `npm run build` et publiera le dossier `dist`.
 
+## Tester les matchs live
+
+L'application contient une fonction Vercel `api/live-matches.js`.
+
+1. Crée une clé API sur API-FOOTBALL / API-SPORTS.
+2. Dans Vercel, ajoute une variable d'environnement serveur :
+
+```bash
+API_FOOTBALL_KEY=ta-cle-api
+```
+
+3. Redéploie le projet.
+
+Important : cette variable ne doit pas commencer par `VITE_`, sinon elle serait exposée dans le navigateur.
+
+Si aucune clé n'est configurée, ou si aucun match live n'est disponible, l'application garde le match de démonstration France vs Portugal.
+
 ## Vision produit
 
 Le projet doit rester rapide, viral et facile à comprendre: une session courte, un score immédiat, et le sentiment de contribuer à son pays en direct.

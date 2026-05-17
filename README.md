@@ -65,7 +65,8 @@ Dans Supabase, ouvre **SQL Editor**, puis exécute ces fichiers dans cet ordre :
 
 1. `supabase/migrations/001_initial_schema.sql`
 2. `supabase/migrations/002_profiles_and_api_scoring.sql`
-3. `supabase/seed.sql`
+3. `supabase/migrations/004_profile_rpc.sql`
+4. `supabase/seed.sql`
 
 Le schéma sépare :
 

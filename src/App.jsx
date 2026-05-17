@@ -240,7 +240,7 @@ export function App() {
       if (!storedPseudo) return;
 
       const restoredProfile = await getOrCreateProfile(storedPseudo, selectedCode);
-      if (!isMounted || !restoredProfile) return;
+      if (!isMounted || !restoredProfile || restoredProfile.error) return;
 
       setProfile(restoredProfile);
       setPseudoInput(restoredProfile.display_name);
@@ -274,8 +274,8 @@ export function App() {
     setScoreStatus('Connexion du pseudo...');
 
     const nextProfile = await getOrCreateProfile(pseudoInput, selectedNation.code);
-    if (!nextProfile) {
-      setScoreStatus('Pseudo impossible à créer');
+    if (!nextProfile || nextProfile.error) {
+      setScoreStatus(`Pseudo impossible à créer${nextProfile?.error ? `: ${nextProfile.error}` : ''}`);
       return;
     }
 

@@ -147,6 +147,21 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
   if (!cleanName) return null;
 
   const normalizedName = cleanName.toLowerCase();
+
+  const { data: rpcData, error: rpcError } = await supabase
+    .rpc('get_or_create_profile', {
+      p_display_name: cleanName,
+      p_selected_country_code: selectedCountryCode || null,
+    });
+
+  if (!rpcError && rpcData?.length) {
+    return rpcData[0];
+  }
+
+  if (rpcError) {
+    console.error('Supabase profile RPC error', rpcError);
+  }
+
   const { data: existing, error: existingError } = await supabase
     .from('profiles')
     .select('id, display_name, selected_country_code')
@@ -155,7 +170,7 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
 
   if (existingError) {
     console.error('Supabase profile lookup error', existingError);
-    return null;
+    return { error: existingError.message || 'profile-lookup-failed' };
   }
 
   if (existing) return existing;
@@ -181,7 +196,7 @@ export async function getOrCreateProfile(displayName, selectedCountryCode) {
     }
 
     console.error('Supabase profile insert error', error);
-    return null;
+    return { error: error.message || 'profile-insert-failed' };
   }
 
   return data;

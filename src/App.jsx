@@ -11,18 +11,25 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import { fetchCountries, fetchCurrentMatch, fetchMatchTimeline, hasSupabaseConfig } from './supabaseClient';
+import {
+  addScoreEvent,
+  fetchCountries,
+  fetchCurrentMatch,
+  fetchMatchTimeline,
+  fetchScoreTotals,
+  hasSupabaseConfig,
+} from './supabaseClient';
 
 const fallbackNations = [
-  { code: 'MAR', region: 'MA', flag: '🇲🇦', name: 'Maroc', supporters: 42800, points: 184200, color: '#c1272d', accent: '#006233', flagGradient: 'linear-gradient(90deg, #c1272d, #006233)' },
-  { code: 'FRA', region: 'FR', flag: '🇫🇷', name: 'France', supporters: 39100, points: 173870, color: '#002654', accent: '#ed2939', flagGradient: 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)' },
-  { code: 'BRA', region: 'BR', flag: '🇧🇷', name: 'Brésil', supporters: 38400, points: 169540, color: '#009739', accent: '#ffdf00', flagGradient: 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)' },
-  { code: 'ARG', region: 'AR', flag: '🇦🇷', name: 'Argentine', supporters: 34700, points: 154220, color: '#75aadb', accent: '#fcbf49', flagGradient: 'linear-gradient(180deg, #75aadb 0 33%, #ffffff 33% 66%, #75aadb 66% 100%)' },
-  { code: 'USA', region: 'US', flag: '🇺🇸', name: 'États-Unis', supporters: 28200, points: 137600, color: '#3c3b6e', accent: '#b22234', flagGradient: 'linear-gradient(135deg, #3c3b6e 0 42%, #ffffff 42% 50%, #b22234 50% 100%)' },
-  { code: 'SEN', region: 'SN', flag: '🇸🇳', name: 'Sénégal', supporters: 24900, points: 128910, color: '#00853f', accent: '#fdef42', flagGradient: 'linear-gradient(90deg, #00853f 0 33%, #fdef42 33% 66%, #e31b23 66% 100%)' },
-  { code: 'CAN', region: 'CA', flag: '🇨🇦', name: 'Canada', supporters: 21600, points: 120340, color: '#d52b1e', accent: '#ffffff', flagGradient: 'linear-gradient(90deg, #d52b1e 0 28%, #ffffff 28% 72%, #d52b1e 72% 100%)' },
-  { code: 'MEX', region: 'MX', flag: '🇲🇽', name: 'Mexique', supporters: 20400, points: 116800, color: '#006847', accent: '#ce1126', flagGradient: 'linear-gradient(90deg, #006847 0 33%, #ffffff 33% 66%, #ce1126 66% 100%)' },
-  { code: 'POR', region: 'PT', flag: '🇵🇹', name: 'Portugal', supporters: 23300, points: 125700, color: '#006600', accent: '#ff0000', flagGradient: 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)' },
+  { code: 'MAR', region: 'MA', flag: '🇲🇦', name: 'Maroc', supporters: 0, points: 0, color: '#c1272d', accent: '#006233', flagGradient: 'linear-gradient(90deg, #c1272d, #006233)' },
+  { code: 'FRA', region: 'FR', flag: '🇫🇷', name: 'France', supporters: 0, points: 0, color: '#002654', accent: '#ed2939', flagGradient: 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)' },
+  { code: 'BRA', region: 'BR', flag: '🇧🇷', name: 'Brésil', supporters: 0, points: 0, color: '#009739', accent: '#ffdf00', flagGradient: 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)' },
+  { code: 'ARG', region: 'AR', flag: '🇦🇷', name: 'Argentine', supporters: 0, points: 0, color: '#75aadb', accent: '#fcbf49', flagGradient: 'linear-gradient(180deg, #75aadb 0 33%, #ffffff 33% 66%, #75aadb 66% 100%)' },
+  { code: 'USA', region: 'US', flag: '🇺🇸', name: 'États-Unis', supporters: 0, points: 0, color: '#3c3b6e', accent: '#b22234', flagGradient: 'linear-gradient(135deg, #3c3b6e 0 42%, #ffffff 42% 50%, #b22234 50% 100%)' },
+  { code: 'SEN', region: 'SN', flag: '🇸🇳', name: 'Sénégal', supporters: 0, points: 0, color: '#00853f', accent: '#fdef42', flagGradient: 'linear-gradient(90deg, #00853f 0 33%, #fdef42 33% 66%, #e31b23 66% 100%)' },
+  { code: 'CAN', region: 'CA', flag: '🇨🇦', name: 'Canada', supporters: 0, points: 0, color: '#d52b1e', accent: '#ffffff', flagGradient: 'linear-gradient(90deg, #d52b1e 0 28%, #ffffff 28% 72%, #d52b1e 72% 100%)' },
+  { code: 'MEX', region: 'MX', flag: '🇲🇽', name: 'Mexique', supporters: 0, points: 0, color: '#006847', accent: '#ce1126', flagGradient: 'linear-gradient(90deg, #006847 0 33%, #ffffff 33% 66%, #ce1126 66% 100%)' },
+  { code: 'POR', region: 'PT', flag: '🇵🇹', name: 'Portugal', supporters: 0, points: 0, color: '#006600', accent: '#ff0000', flagGradient: 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)' },
 ];
 
 const fallbackLiveMatch = {
@@ -32,6 +39,8 @@ const fallbackLiveMatch = {
   status: 'LIVE',
   homeCode: 'FRA',
   awayCode: 'POR',
+  homeTeamId: null,
+  awayTeamId: null,
   homeName: 'France',
   awayName: 'Portugal',
   homeScore: 2,
@@ -45,13 +54,6 @@ const fallbackTimeline = [
   { id: 2, minute: "61'", text: 'Portugal réduit l’écart dans le défi collectif.', side: 'POR' },
   { id: 3, minute: "52'", text: 'Nouveau bonus de série débloqué par la France.', side: 'FRA' },
   { id: 4, minute: "45'", text: 'Pause: match très serré entre les deux communautés.', side: null },
-];
-
-const matchLeaders = [
-  { name: 'Nora', country: 'FRA', supporting: 'FRA', points: 1220 },
-  { name: 'Leo', country: 'POR', supporting: 'POR', points: 1095 },
-  { name: 'Samir', country: 'MAR', supporting: 'FRA', points: 980 },
-  { name: 'Ana', country: 'BRA', supporting: 'POR', points: 870 },
 ];
 
 const recentCountryGames = [
@@ -120,12 +122,15 @@ export function App() {
   const [supportingCode, setSupportingCode] = useState(null);
   const [bonusPoints, setBonusPoints] = useState(0);
   const [nations, setNations] = useState(fallbackNations);
+  const [countryTotals, setCountryTotals] = useState({});
+  const [matchTeamTotals, setMatchTeamTotals] = useState({});
   const [liveMatches, setLiveMatches] = useState([]);
   const [supabaseMatch, setSupabaseMatch] = useState(null);
   const [timeline, setTimeline] = useState(fallbackTimeline);
-  const [matchSource, setMatchSource] = useState('demo');
+  const [scoreStatus, setScoreStatus] = useState('');
 
-  const liveMatch = liveMatches[0] ?? supabaseMatch ?? fallbackLiveMatch;
+  const liveMatch = supabaseMatch ?? liveMatches[0] ?? fallbackLiveMatch;
+  const activeMatchSource = supabaseMatch ? 'supabase' : liveMatches[0] ? 'api' : 'demo';
   const selectedNation = getNation(selectedCode, nations);
   const homeNation = getMatchSide(liveMatch.homeCode, liveMatch, nations);
   const awayNation = getMatchSide(liveMatch.awayCode, liveMatch, nations);
@@ -143,16 +148,20 @@ export function App() {
     '--support-accent': supportingNation.accent,
     '--support-flag-gradient': supportingNation.flagGradient,
   };
+  const homeMatchPoints =
+    matchTeamTotals[`${liveMatch.id}:${liveMatch.homeTeamId}`] || liveMatch.homeMatchPoints || 0;
+  const awayMatchPoints =
+    matchTeamTotals[`${liveMatch.id}:${liveMatch.awayTeamId}`] || liveMatch.awayMatchPoints || 0;
 
   const rankedNations = useMemo(
     () =>
       nations
         .map((nation) => ({
           ...nation,
-          points: supportingCode && nation.code === supportingCode ? nation.points + bonusPoints : nation.points,
+          points: (countryTotals[nation.code] || 0) + (supportingCode === nation.code ? bonusPoints : 0),
         }))
         .sort((a, b) => b.points - a.points),
-    [bonusPoints, supportingCode],
+    [bonusPoints, countryTotals, nations, supportingCode],
   );
 
   const selectedRank = rankedNations.findIndex((nation) => nation.code === selectedCode) + 1;
@@ -161,21 +170,23 @@ export function App() {
     let isMounted = true;
 
     async function loadSupabaseData() {
-      const [countries, currentMatch] = await Promise.all([
+      const [countries, currentMatch, scoreTotals] = await Promise.all([
         fetchCountries(),
         fetchCurrentMatch(),
+        fetchScoreTotals(),
       ]);
 
       if (!isMounted) return;
 
       if (countries.length) {
-        setNations(countries);
+        setNations(countries.map((country) => ({ ...country, points: 0 })));
       }
+
+      setCountryTotals(scoreTotals.countryTotals);
+      setMatchTeamTotals(scoreTotals.matchTeamTotals);
 
       if (currentMatch) {
         setSupabaseMatch(currentMatch);
-        setMatchSource('supabase');
-
         const currentTimeline = await fetchMatchTimeline(currentMatch.id);
         if (isMounted && currentTimeline.length) {
           setTimeline(currentTimeline);
@@ -193,12 +204,9 @@ export function App() {
 
         if (payload.matches?.length) {
           setLiveMatches(payload.matches);
-          setMatchSource(payload.configured ? 'api' : 'demo');
         }
       } catch {
-        if (isMounted) {
-          setMatchSource('demo');
-        }
+        return;
       }
     }
 
@@ -215,6 +223,33 @@ export function App() {
   function joinMatch(sideCode) {
     setSupportingCode(sideCode);
     setScreen('match');
+  }
+
+  async function refreshScoreTotals() {
+    const totals = await fetchScoreTotals();
+    setCountryTotals(totals.countryTotals);
+    setMatchTeamTotals(totals.matchTeamTotals);
+  }
+
+  async function handleScorePoint() {
+    setScoreStatus('Enregistrement...');
+
+    const result = await addScoreEvent({
+      matchId: liveMatch.id,
+      supportingCode: supportingNation.code,
+      points: 1,
+      source: 'tap',
+    });
+
+    if (result.ok) {
+      setBonusPoints(0);
+      await refreshScoreTotals();
+      setScoreStatus('+1 point enregistré');
+      return;
+    }
+
+    setBonusPoints((points) => points + 1);
+    setScoreStatus('Mode local: Supabase indisponible');
   }
 
   function focusLiveMatch() {
@@ -360,10 +395,11 @@ export function App() {
               bouton simple, puis on le transformera en vrai jeu.
             </p>
 
-            <button className="tap-game" onClick={() => setBonusPoints((points) => points + 1)} type="button">
+            <button className="tap-game" onClick={handleScorePoint} type="button">
               <Zap aria-hidden="true" />
               Marquer un point pour {supportingNation.name}
             </button>
+            {scoreStatus ? <p className="score-status">{scoreStatus}</p> : null}
           </div>
 
           <aside className="match-info panel colorful-panel" style={matchTheme} aria-label="Informations du match">
@@ -401,22 +437,9 @@ export function App() {
               <h2>Top joueurs du match</h2>
             </div>
             <div className="player-list">
-              {matchLeaders.map((player, index) => {
-                const playerCountry = getNation(player.country, nations);
-                const supported = getNation(player.supporting, nations);
-                return (
-                  <div className="player-row" key={player.name}>
-                    <span className="rank">{index + 1}</span>
-                    <span>
-                      <strong>{player.name}</strong>
-                      <small>
-                        {playerCountry.flag} joueur · soutient {supported.flag} {supported.name}
-                      </small>
-                    </span>
-                    <em>{formatNumber(player.points)}</em>
-                  </div>
-                );
-              })}
+              <div className="empty-state">
+                Aucun joueur réel pour l’instant. La prochaine étape sera de créer des profils anonymes.
+              </div>
             </div>
           </div>
 
@@ -491,7 +514,7 @@ export function App() {
             <div className="live-card-header">
               <span>
                 <span className="live-dot" />
-                Match live · {matchSource === 'api' ? 'API' : matchSource === 'supabase' ? 'Supabase' : 'démo'}
+                Match live · {activeMatchSource === 'api' ? 'API' : activeMatchSource === 'supabase' ? 'Supabase' : 'démo'}
               </span>
               <strong>{liveMatch.minute}'</strong>
             </div>
@@ -500,7 +523,7 @@ export function App() {
               <button className="team-side home-side" onClick={() => joinMatch(homeNation.code)} type="button">
                 <span className="team-flag">{homeNation.flag}</span>
                 <strong>{homeNation.name}</strong>
-                <small>{formatNumber(liveMatch.homeMatchPoints)} pts match</small>
+                <small>{formatNumber(homeMatchPoints)} pts match</small>
               </button>
 
               <div className="match-score">
@@ -514,7 +537,7 @@ export function App() {
               <button className="team-side away-side" onClick={() => joinMatch(awayNation.code)} type="button">
                 <span className="team-flag">{awayNation.flag}</span>
                 <strong>{awayNation.name}</strong>
-                <small>{formatNumber(liveMatch.awayMatchPoints)} pts match</small>
+                <small>{formatNumber(awayMatchPoints)} pts match</small>
               </button>
             </div>
 
@@ -586,7 +609,7 @@ export function App() {
             <div>
               <Trophy aria-hidden="true" />
               <span>Points</span>
-              <strong>{formatNumber(selectedNation.points)}</strong>
+              <strong>{formatNumber(countryTotals[selectedNation.code] || 0)}</strong>
             </div>
           </div>
           <div className="history-list">

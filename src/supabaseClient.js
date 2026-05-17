@@ -70,6 +70,8 @@ export async function fetchCurrentMatch() {
     status: data.status,
     homeCode: data.home_team.country_code || `TEAM_${data.home_team.id}`,
     awayCode: data.away_team.country_code || `TEAM_${data.away_team.id}`,
+    homeTeamId: data.home_team.id,
+    awayTeamId: data.away_team.id,
     homeName: data.home_team.name,
     awayName: data.away_team.name,
     homeScore: data.home_score ?? 0,
@@ -99,4 +101,73 @@ export async function fetchMatchTimeline(matchId) {
     text: event.description,
     side: event.team?.country_code || null,
   }));
+}
+
+export async function fetchScoreTotals() {
+  if (!supabase) return { countryTotals: {}, matchTeamTotals: {} };
+
+  const { data, error } = await supabase
+    .from('score_events')
+    .select(`
+      match_id,
+      points,
+      team:supporting_team_id(id, country_code)
+    `);
+
+  if (error) {
+    console.error('Supabase score totals error', error);
+    return { countryTotals: {}, matchTeamTotals: {} };
+  }
+
+  return (data || []).reduce(
+    (totals, event) => {
+      const points = event.points || 0;
+      const teamId = event.team?.id;
+      const countryCode = event.team?.country_code;
+
+      if (countryCode) {
+        totals.countryTotals[countryCode] = (totals.countryTotals[countryCode] || 0) + points;
+      }
+
+      if (event.match_id && teamId) {
+        const key = `${event.match_id}:${teamId}`;
+        totals.matchTeamTotals[key] = (totals.matchTeamTotals[key] || 0) + points;
+      }
+
+      return totals;
+    },
+    { countryTotals: {}, matchTeamTotals: {} },
+  );
+}
+
+export async function addScoreEvent({ matchId, supportingCode, points = 1, source = 'tap' }) {
+  if (!supabase || !matchId || !supportingCode) {
+    return { ok: false, reason: 'missing-config' };
+  }
+
+  const { data: team, error: teamError } = await supabase
+    .from('teams')
+    .select('id')
+    .eq('country_code', supportingCode)
+    .limit(1)
+    .maybeSingle();
+
+  if (teamError || !team) {
+    console.error('Supabase team lookup error', teamError);
+    return { ok: false, reason: 'missing-team' };
+  }
+
+  const { error } = await supabase.from('score_events').insert({
+    match_id: matchId,
+    supporting_team_id: team.id,
+    points,
+    source,
+  });
+
+  if (error) {
+    console.error('Supabase score insert error', error);
+    return { ok: false, reason: 'insert-failed' };
+  }
+
+  return { ok: true };
 }

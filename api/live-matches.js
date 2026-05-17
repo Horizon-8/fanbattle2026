@@ -36,6 +36,8 @@ function normalizeFixture(fixture) {
     status: fixture.fixture.status.short || 'LIVE',
     homeCode,
     awayCode,
+    homeTeamId: null,
+    awayTeamId: null,
     homeName,
     awayName,
     homeLogo: fixture?.teams?.home?.logo || null,

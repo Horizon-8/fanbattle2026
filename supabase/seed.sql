@@ -4,15 +4,15 @@
 insert into public.countries
   (code, name, flag, color, accent, flag_gradient, supporters_count, total_points)
 values
-  ('MAR', 'Maroc', '🇲🇦', '#c1272d', '#006233', 'linear-gradient(90deg, #c1272d, #006233)', 42800, 184200),
-  ('FRA', 'France', '🇫🇷', '#002654', '#ed2939', 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)', 39100, 173870),
-  ('BRA', 'Brésil', '🇧🇷', '#009739', '#ffdf00', 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)', 38400, 169540),
-  ('ARG', 'Argentine', '🇦🇷', '#75aadb', '#fcbf49', 'linear-gradient(180deg, #75aadb 0 33%, #ffffff 33% 66%, #75aadb 66% 100%)', 34700, 154220),
-  ('USA', 'États-Unis', '🇺🇸', '#3c3b6e', '#b22234', 'linear-gradient(135deg, #3c3b6e 0 42%, #ffffff 42% 50%, #b22234 50% 100%)', 28200, 137600),
-  ('SEN', 'Sénégal', '🇸🇳', '#00853f', '#fdef42', 'linear-gradient(90deg, #00853f 0 33%, #fdef42 33% 66%, #e31b23 66% 100%)', 24900, 128910),
-  ('CAN', 'Canada', '🇨🇦', '#d52b1e', '#ffffff', 'linear-gradient(90deg, #d52b1e 0 28%, #ffffff 28% 72%, #d52b1e 72% 100%)', 21600, 120340),
-  ('MEX', 'Mexique', '🇲🇽', '#006847', '#ce1126', 'linear-gradient(90deg, #006847 0 33%, #ffffff 33% 66%, #ce1126 66% 100%)', 20400, 116800),
-  ('POR', 'Portugal', '🇵🇹', '#006600', '#ff0000', 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)', 23300, 125700)
+  ('MAR', 'Maroc', '🇲🇦', '#c1272d', '#006233', 'linear-gradient(90deg, #c1272d, #006233)', 0, 0),
+  ('FRA', 'France', '🇫🇷', '#002654', '#ed2939', 'linear-gradient(90deg, #002654 0 33%, #ffffff 33% 66%, #ed2939 66% 100%)', 0, 0),
+  ('BRA', 'Brésil', '🇧🇷', '#009739', '#ffdf00', 'linear-gradient(135deg, #009739 0 48%, #ffdf00 48% 62%, #002776 62% 100%)', 0, 0),
+  ('ARG', 'Argentine', '🇦🇷', '#75aadb', '#fcbf49', 'linear-gradient(180deg, #75aadb 0 33%, #ffffff 33% 66%, #75aadb 66% 100%)', 0, 0),
+  ('USA', 'États-Unis', '🇺🇸', '#3c3b6e', '#b22234', 'linear-gradient(135deg, #3c3b6e 0 42%, #ffffff 42% 50%, #b22234 50% 100%)', 0, 0),
+  ('SEN', 'Sénégal', '🇸🇳', '#00853f', '#fdef42', 'linear-gradient(90deg, #00853f 0 33%, #fdef42 33% 66%, #e31b23 66% 100%)', 0, 0),
+  ('CAN', 'Canada', '🇨🇦', '#d52b1e', '#ffffff', 'linear-gradient(90deg, #d52b1e 0 28%, #ffffff 28% 72%, #d52b1e 72% 100%)', 0, 0),
+  ('MEX', 'Mexique', '🇲🇽', '#006847', '#ce1126', 'linear-gradient(90deg, #006847 0 33%, #ffffff 33% 66%, #ce1126 66% 100%)', 0, 0),
+  ('POR', 'Portugal', '🇵🇹', '#006600', '#ff0000', 'linear-gradient(90deg, #006600 0 40%, #ff0000 40% 100%)', 0, 0)
 on conflict (code) do update set
   name = excluded.name,
   flag = excluded.flag,

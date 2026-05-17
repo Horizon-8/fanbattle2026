@@ -611,6 +611,22 @@ h1 {
   animation: buttonEnergy 2.4s ease-in-out infinite;
 }
 
+.score-status {
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-weight: 800;
+}
+
+.empty-state {
+  min-height: 76px;
+  padding: 18px;
+  border: 1px dashed #cbd7d0;
+  border-radius: 8px;
+  color: #65727c;
+  background: #fff;
+  font-weight: 800;
+}
+
 .match-info {
   min-height: 560px;
 }

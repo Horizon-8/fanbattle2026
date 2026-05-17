@@ -78,18 +78,25 @@ Le schéma sépare :
 
 On stocke les points comme événements dans `score_events`, puis on calcule ou synchronise les totaux. C'est plus robuste que modifier directement un score depuis le navigateur.
 
+Pour repartir à zéro pendant les tests, exécute :
+
+```text
+supabase/reset_scores.sql
+```
+
 ## Source des données dans l'app
 
 L'interface lit maintenant :
 
 1. Les pays depuis Supabase (`countries`), avec fallback local.
 2. Le match live seedé depuis Supabase (`matches`), avec fallback local.
-3. Les matchs live externes via `/api/live-matches` si `API_FOOTBALL_KEY` est configurée.
+3. Les points depuis Supabase (`score_events`).
+4. Les matchs live externes via `/api/live-matches` si `API_FOOTBALL_KEY` est configurée.
 
 L'ordre d'affichage du match principal est :
 
 ```text
-API live disponible -> match Supabase live -> match de démonstration
+match Supabase live -> API live disponible -> match de démonstration
 ```
 
 ## Vision produit

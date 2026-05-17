@@ -59,6 +59,25 @@ Important : cette variable ne doit pas commencer par `VITE_`, sinon elle serait 
 
 Si aucune clé n'est configurée, ou si aucun match live n'est disponible, l'application garde le match de démonstration France vs Portugal.
 
+## Créer les tables Supabase
+
+Dans Supabase, ouvre **SQL Editor**, puis exécute ces fichiers dans cet ordre :
+
+1. `supabase/migrations/001_initial_schema.sql`
+2. `supabase/seed.sql`
+
+Le schéma sépare :
+
+- `countries` : identité nationale, couleurs, points globaux.
+- `teams` : équipes jouables, nationales ou clubs venant d'une API.
+- `profiles` : utilisateurs ou visiteurs anonymes.
+- `matches` : matchs live ou planifiés.
+- `match_timeline_events` : événements/commentaires d'un match.
+- `match_participants` : utilisateur inscrit dans un camp pour un match.
+- `score_events` : historique append-only des points marqués.
+
+On stocke les points comme événements dans `score_events`, puis on calcule ou synchronise les totaux. C'est plus robuste que modifier directement un score depuis le navigateur.
+
 ## Vision produit
 
 Le projet doit rester rapide, viral et facile à comprendre: une session courte, un score immédiat, et le sentiment de contribuer à son pays en direct.
